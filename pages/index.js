@@ -1,8 +1,14 @@
 import Head from "next/head";
-import { useSession, signIn, signOut } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
+import LoginPage from "@/components/LoginPage";
+import Nav from "@/components/Nav";
 
 export default function Home() {
   const { data: session } = useSession()
+
+  if (!session) {
+    return <LoginPage />
+  }
 
   return (
     <>
@@ -12,22 +18,14 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="bg-blue-900 w-screen h-screen flex items-center">
-        <div className="text-center w-full">
-          {session ? (
-            <>
-              Signed in as {session.user.email} <br />
-              <button onClick={() => signOut()}>Sign out</button>
-            </>
-          ) : (
-            <>
-              <button
-                className="bg-white py-2 px-4 rounded-lg"
-                onClick={() => signIn('google')}
-              >Login with Google</button>
-            </>
-          )}
 
+      <div className="bg-blue-900 min-h-screen flex">
+        <Nav />
+        <div className="bg-white flex-grow mt-2 mr-2 rounded-lg p-4 mb-2">
+        <>
+            Signed in as {session.user.email} 
+            <button onClick={() => signOut()}>Sign out</button>
+          </>
         </div>
       </div>
     </>
