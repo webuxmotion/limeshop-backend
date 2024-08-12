@@ -6,10 +6,7 @@ import Nav from "@/components/Nav";
 export default function Layout({ children }) {
     const { data: session } = useSession()
 
-    console.log('sdfsdf');
-
     if (!session) {
-        console.log('sdfsdf');
         return <LoginPage />
     }
 
@@ -27,7 +24,9 @@ export default function Layout({ children }) {
                 <div className="bg-white flex-grow mt-2 mr-2 rounded-lg p-4 mb-2">
                     {children}
 
-                    <button onClick={signOut}>Logout</button>
+                    <div className="mt-10 border-t-2 pt-2">
+                        <button onClick={signOut}>Logout</button>
+                    </div>
                 </div>
             </div>
         </>
