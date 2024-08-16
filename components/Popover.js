@@ -24,11 +24,14 @@ function Popover({
   useEffect(() => {
     function handleClickOutside(event) {
         if (clickOutsideOnly) {
+          
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
                 setShow(false);
               }
         } else {
-            setShow(false);
+            setTimeout(() => {
+              setShow(false);
+            }, 30);
         }
     }
 
