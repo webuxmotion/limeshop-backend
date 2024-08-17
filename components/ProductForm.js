@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
+import store from '@/lib/edgestore';
+
 
 export default function ProductForm({ data }) {
     const router = useRouter();
+    console.log(store);
+    const { edgestore } = store.useEdgeStore();
 
     const [formValues, setFormValues] = useState({
         title: "",
@@ -51,14 +55,25 @@ export default function ProductForm({ data }) {
 
             for (const file of files) {
                 data.append('file', file);
+
+                const res = await edgestore.publicFiles.upload({
+                    file,
+                    onProgressChange: (progress) => {
+                      // you can use this to show a progress bar
+                      console.log(progress);
+                    },
+                  });
+                  // you can run some server action or api here
+                  // to add the necessary data to your database
+                  console.log(res);
             }
 
-            const res = await axios.post('/api/upload', data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            console.log(res.data);
+            // const res = await axios.post('/api/upload', data, {
+            //     headers: {
+            //         'Content-Type': 'multipart/form-data'
+            //     }
+            // });
+            // console.log(res.data);
         }
     }
 
