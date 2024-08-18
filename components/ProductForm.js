@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { ReactSortable } from "react-sortablejs";
 import { useRouter } from "next/router";
-import store from '@/lib/edgestore';
+import Spinner from "./Spinner";
 
 
 export default function ProductForm({ data }) {
     const router = useRouter();
-    console.log(store);
-    const { edgestore } = store.useEdgeStore();
 
     const [formValues, setFormValues] = useState({
         title: "",
@@ -16,6 +15,7 @@ export default function ProductForm({ data }) {
         images: []
     });
     const [goToProducts, setGoToProducts] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleInput = (event) => {
         setFormValues(prev => ({
@@ -52,29 +52,36 @@ export default function ProductForm({ data }) {
 
         if (files?.length > 0) {
             const data = new FormData();
+            setIsUploading(true);
 
             for (const file of files) {
                 data.append('file', file);
 
-                const res = await edgestore.publicFiles.upload({
-                    file,
-                    onProgressChange: (progress) => {
-                      // you can use this to show a progress bar
-                      console.log(progress);
-                    },
-                  });
-                  // you can run some server action or api here
-                  // to add the necessary data to your database
-                  console.log(res);
             }
 
-            // const res = await axios.post('/api/upload', data, {
-            //     headers: {
-            //         'Content-Type': 'multipart/form-data'
-            //     }
-            // });
-            // console.log(res.data);
+            const res = await axios.post('/api/upload', data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            
+            setFormValues(prevValues => ({
+                ...prevValues,
+                images: [
+                    ...prevValues.images,
+                    ...res.data?.links
+                ]
+            }));
+
+            setIsUploading(false);
         }
+    }
+
+    const updateImagesOrder = (images) => {
+        setFormValues(prevValues => ({
+            ...prevValues,
+            images
+        }));
     }
 
     useEffect(() => {
@@ -99,7 +106,23 @@ export default function ProductForm({ data }) {
         />
 
         <label>Photos </label>
-        <div className="mb-2">
+        <div className="mb-2 flex flex-wrap gap-2">
+            <ReactSortable
+                list={formValues.images} 
+                setList={updateImagesOrder}
+                className="flex flex-wrap gap-2"
+            >
+                {!!formValues.images?.length && formValues.images.map(link => (
+                    <div key={link} className="h-24">
+                        <img src={link} alt="" className="h-24 rounded-md"/>
+                    </div>
+                ))}
+            </ReactSortable>
+            {isUploading && (
+                    <div className="h-24 flex items-center">
+                        <Spinner />
+                    </div>
+                )}
             <label className="w-24 h-24 border items-center justify-center flex rounded-md text-gray-500 cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
