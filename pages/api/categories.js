@@ -19,4 +19,19 @@ export default async function handle(req, res) {
 
         res.json(categoryDoc);
     }
+
+    if (method === "PUT") {
+        const { _id, name, parentCategory } = req.body;
+
+        const updatedInfo = await Category.updateOne(
+            { _id }, 
+            { 
+                name,
+                parent: parentCategory || null
+            },
+            { runValidators: true }
+        );
+
+        res.json(updatedInfo);
+    }
 }

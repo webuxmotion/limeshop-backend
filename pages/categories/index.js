@@ -11,6 +11,12 @@ export default function Categories() {
     const [editValue, setEditValue] = useState("");
     const [editParentCategoryValue, setEditParentCategoryValue] = useState("");
 
+    const resetEditValues = () => {
+        setEditId("");
+        setEditValue("");
+        setEditParentCategoryValue("");
+    }
+
     const fetchItems = () => {
         axios.get('/api/categories').then(result => {
             setItems(result.data);
@@ -47,8 +53,15 @@ export default function Categories() {
         }
     }
 
-    const handleSave = () => {
-        console.log({ editId, editValue, editParentCategoryValue });
+    const handleSave = async () => {
+        await axios.put('/api/categories', { 
+            _id: editId,
+            name: editValue, 
+            parentCategory: editParentCategoryValue 
+        });
+
+        fetchItems();
+        resetEditValues();
     }
 
     return <Layout>
@@ -110,7 +123,7 @@ export default function Categories() {
 
                         </td>
                         <td>
-                            {editId === item._id && item?.parent?._id ? (
+                            {editId === item._id ? (
                                 <>
                                     <select
                                         className="mb-0"
