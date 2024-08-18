@@ -1,4 +1,4 @@
-const { Schema, model, models } = require("mongoose");
+const { Schema, model, models, Types } = require("mongoose");
 
 const ProductSchema = new Schema({
     title: {
@@ -9,6 +9,10 @@ const ProductSchema = new Schema({
     price: {
         type: Number,
         required: true,
+    },
+    category: {
+        type: Types.ObjectId,
+        ref: 'Category'
     },
     images: [
         {

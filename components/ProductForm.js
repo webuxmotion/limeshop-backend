@@ -10,12 +10,14 @@ export default function ProductForm({ data }) {
 
     const [formValues, setFormValues] = useState({
         title: "",
+        category: "",
         description: "",
         price: "",
         images: []
     });
     const [goToProducts, setGoToProducts] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [categories, setCategories] = useState([]);
 
     const handleInput = (event) => {
         setFormValues(prev => ({
@@ -64,7 +66,7 @@ export default function ProductForm({ data }) {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            
+
             setFormValues(prevValues => ({
                 ...prevValues,
                 images: [
@@ -88,12 +90,19 @@ export default function ProductForm({ data }) {
         if (data) {
             setFormValues({
                 title: data?.title || "",
+                category: data?.category || "",
                 description: data?.description || "",
                 price: data?.price || "",
                 images: data?.images || []
             });
         }
     }, [data]);
+
+    useEffect(() => {
+        axios.get('/api/categories').then(result => {
+            setCategories(result?.data);
+        });
+    }, []);
 
     return <form onSubmit={handleSubmit}>
         <label>Product name</label>
@@ -105,24 +114,39 @@ export default function ProductForm({ data }) {
             value={formValues.title}
         />
 
-        <label>Photos </label>
+        <label>Category</label>
+        <select 
+            onChange={handleInput}
+            name="category"
+            value={formValues?.category}
+        >
+            <option value="">Uncategorized</option>
+            {!!categories.length && categories.map((category) => (
+                <option 
+                    value={category._id}
+                    key={category._id}
+                >{category.name}</option>
+            ))}
+        </select>
+
+        <label>Photos</label>
         <div className="mb-2 flex flex-wrap gap-2">
             <ReactSortable
-                list={formValues.images} 
+                list={formValues.images}
                 setList={updateImagesOrder}
                 className="flex flex-wrap gap-2"
             >
                 {!!formValues.images?.length && formValues.images.map(link => (
                     <div key={link} className="h-24">
-                        <img src={link} alt="" className="h-24 rounded-md"/>
+                        <img src={link} alt="" className="h-24 rounded-md" />
                     </div>
                 ))}
             </ReactSortable>
             {isUploading && (
-                    <div className="h-24 flex items-center">
-                        <Spinner />
-                    </div>
-                )}
+                <div className="h-24 flex items-center">
+                    <Spinner />
+                </div>
+            )}
             <label className="w-24 h-24 border items-center justify-center flex rounded-md text-gray-500 cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
