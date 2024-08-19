@@ -1,8 +1,15 @@
 import Layout from "@/components/Layout";
 import axios from "axios";
-import Link from "next/link";
 import { withSwal } from 'react-sweetalert2';
 import { useEffect, useState } from "react";
+import Properties from "@/components/Properties";
+
+const preparePropertiesForSending = (properties) => {
+    return properties.map(p => ({
+        name: p.name,
+        values: p.values.split(',')
+    }))
+}
 
 const Categories = ({ swal }) => {
     const [name, setName] = useState("");
@@ -11,11 +18,13 @@ const Categories = ({ swal }) => {
     const [editId, setEditId] = useState("");
     const [editValue, setEditValue] = useState("");
     const [editParentCategoryValue, setEditParentCategoryValue] = useState("");
+    const [properties, setProperties] = useState([]);
 
     const resetEditValues = () => {
         setEditId("");
         setEditValue("");
         setEditParentCategoryValue("");
+        setProperties([]);
     }
 
     const fetchItems = () => {
@@ -27,9 +36,16 @@ const Categories = ({ swal }) => {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
-        await axios.post('/api/categories', { name, parentCategory });
+        await axios.post('/api/categories', {
+            name,
+            parentCategory,
+            properties: preparePropertiesForSending(properties)
+        });
 
         setName('');
+        setParentCategory('');
+        setProperties([]);
+
         fetchItems();
     }
 
@@ -41,11 +57,21 @@ const Categories = ({ swal }) => {
         setParentCategory(event.target.value);
     }
 
-    const handleEditClick = ({ id, value, parent }) => {
+    const handleEditClick = ({ id, value, parent, properties }) => {
         setEditId(id);
         setEditValue(value);
         if (parent) {
             setEditParentCategoryValue(parent);
+        } else {
+            setEditParentCategoryValue("");
+        }
+        if (properties?.length) {
+            setProperties(properties.map(({ name, values }) => ({
+                name,
+                values: values.join(',')
+            })));
+        } else {
+            setProperties([]);
         }
     }
 
@@ -53,7 +79,8 @@ const Categories = ({ swal }) => {
         await axios.put('/api/categories', {
             _id: editId,
             name: editValue,
-            parentCategory: editParentCategoryValue
+            parentCategory: editParentCategoryValue,
+            properties: preparePropertiesForSending(properties)
         });
 
         fetchItems();
@@ -77,38 +104,88 @@ const Categories = ({ swal }) => {
         });
     }
 
+    const handleAddNewPropertyClick = () => {
+        setProperties(prev => {
+            return [
+                ...prev,
+                {
+                    name: '',
+                    values: ''
+                }
+            ]
+        })
+    }
+
+    const handlePropertyNameChange = (index, value) => {
+        setProperties(prev => {
+            const properties = [...prev];
+            properties[index].name = value;
+
+            return properties;
+        });
+    }
+
+    const handlePropertyValuesChange = (index, value) => {
+        setProperties(prev => {
+            const properties = [...prev];
+            properties[index].values = value;
+
+            return properties;
+        });
+    }
+
+    const removeProperty = (index) => {
+        setProperties(prev => {
+            const newProperties = [...prev].filter((_, propertyIndex) => {
+                return propertyIndex !== index;
+            });
+
+            return newProperties;
+        })
+    }
+
     useEffect(() => {
         fetchItems();
     }, []);
 
     return <Layout>
         <h1>Categories</h1>
-        <form onSubmit={handleSubmit} className="flex gap-1">
-            <div>
-                <label> New category name</label>
-                <input
-                    className="mb-0"
-                    type="text"
-                    value={name}
-                    placeholder="Category name"
-                    onChange={handleInputChange}
+        <form onSubmit={handleSubmit}>
+            <div className="flex gap-1">
+                <div>
+                    <label> New category name</label>
+                    <input
+                        type="text"
+                        value={name}
+                        placeholder="Category name"
+                        onChange={handleInputChange}
+                    />
+                </div>
+                <div>
+                    <label>Parent category</label>
+                    <select
+                        onChange={handleParentCategoryInputChange}
+                        value={parentCategory}
+                    >
+                        <option value="">No parent category</option>
+                        {items.length > 0 && items.map((item) => (
+                            <option value={item._id} key={item?._id}>
+                                {item.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            {!editId ? (
+                <Properties
+                    properties={properties}
+                    handleAddNewPropertyClick={handleAddNewPropertyClick}
+                    handlePropertyNameChange={handlePropertyNameChange}
+                    handlePropertyValuesChange={handlePropertyValuesChange}
+                    removeProperty={removeProperty}
                 />
-            </div>
-            <div>
-                <label>Parent category</label>
-                <select
-                    className="mb-0"
-                    onChange={handleParentCategoryInputChange}
-                    value={parentCategory}
-                >
-                    <option value="">No parent category</option>
-                    {items.length > 0 && items.map((item) => (
-                        <option value={item._id} key={item?._id}>
-                            {item.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            ) : null}
 
             <button type="submit" className="btn-primary">Save</button>
         </form>
@@ -158,6 +235,14 @@ const Categories = ({ swal }) => {
                                             </option>
                                         ))}
                                     </select>
+
+                                    <Properties
+                                        properties={properties}
+                                        handleAddNewPropertyClick={handleAddNewPropertyClick}
+                                        handlePropertyNameChange={handlePropertyNameChange}
+                                        handlePropertyValuesChange={handlePropertyValuesChange}
+                                        removeProperty={removeProperty}
+                                    />
                                 </>
                             ) : (
                                 <>
@@ -167,14 +252,19 @@ const Categories = ({ swal }) => {
                         </td>
                         <td>
                             {editId === item._id ? (
-                                <>
+                                <div className="flex gap-1">
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        onClick={resetEditValues}
+                                    >Cancel</button>
                                     <button
                                         className="btn-primary flex items-center gap-1"
                                         onClick={handleSave}
                                     >
                                         Save
                                     </button>
-                                </>
+                                </div>
                             ) : (
                                 <div className="flex gap-1">
                                     <button
@@ -182,7 +272,8 @@ const Categories = ({ swal }) => {
                                         onClick={() => handleEditClick({
                                             id: item._id,
                                             value: item.name,
-                                            parent: item?.parent?._id
+                                            parent: item?.parent?._id,
+                                            properties: item?.properties
                                         })}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">

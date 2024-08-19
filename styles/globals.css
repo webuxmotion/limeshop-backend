@@ -22,6 +22,10 @@ label {
     @apply bg-blue-900 text-white px-4 rounded-md py-1;
 }
 
+.btn-secondary {
+    @apply px-4 rounded-md py-1 bg-blue-200 text-black text-sm;
+}
+
 table.basic {
     @apply w-full;
 }
