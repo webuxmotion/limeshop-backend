@@ -13,11 +13,13 @@ export default function ProductForm({ data }) {
         category: "",
         description: "",
         price: "",
+        properties: {},
         images: []
     });
     const [goToProducts, setGoToProducts] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [properties, setProperties] = useState([]);
 
     const handleInput = (event) => {
         setFormValues(prev => ({
@@ -32,6 +34,10 @@ export default function ProductForm({ data }) {
         const dataToSend = {
             ...formValues
         };
+
+        if (!dataToSend.category) {
+            dataToSend.category = null;
+        }
 
         if (data?._id) {
             // update product
@@ -58,7 +64,6 @@ export default function ProductForm({ data }) {
 
             for (const file of files) {
                 data.append('file', file);
-
             }
 
             const res = await axios.post('/api/upload', data, {
@@ -86,6 +91,16 @@ export default function ProductForm({ data }) {
         }));
     }
 
+    const handlePropertyChange = (name, value) => {
+        setFormValues(prevValues => ({
+            ...prevValues,
+            properties: {
+                ...prevValues.properties,
+                [name]: value,
+            }
+        }));
+    }
+
     useEffect(() => {
         if (data) {
             setFormValues({
@@ -93,10 +108,44 @@ export default function ProductForm({ data }) {
                 category: data?.category || "",
                 description: data?.description || "",
                 price: data?.price || "",
+                properties: data?.properties || {},
                 images: data?.images || []
             });
         }
     }, [data]);
+
+    console.log(formValues);
+
+    useEffect(() => {
+        if (categories.length > 0 && formValues.category) {
+            const propertiesCandidate = [];
+            let selectedCategory = categories.find((category) => {
+                return category._id === formValues.category;
+            });
+            const selectedCategoryProperties = selectedCategory?.properties;
+
+            if (selectedCategoryProperties?.length > 0) {
+                propertiesCandidate.push(...selectedCategoryProperties);
+            }
+
+            while (selectedCategory?.parent?._id) {
+                const parentCategory = categories.find(({ _id }) => {
+                    return _id === selectedCategory?.parent?._id;
+                });
+                const parentCategoryProperties = parentCategory?.properties;
+
+                if (parentCategoryProperties?.length > 0) {
+                    propertiesCandidate.push(...parentCategoryProperties);
+                }
+
+                selectedCategory = parentCategory;
+            }
+
+            setProperties(propertiesCandidate);
+        } else {
+            setProperties([]);
+        }
+    }, [formValues.category, categories]);
 
     useEffect(() => {
         axios.get('/api/categories').then(result => {
@@ -115,19 +164,46 @@ export default function ProductForm({ data }) {
         />
 
         <label>Category</label>
-        <select 
+        <select
             onChange={handleInput}
             name="category"
             value={formValues?.category}
         >
             <option value="">Uncategorized</option>
             {!!categories.length && categories.map((category) => (
-                <option 
+                <option
                     value={category._id}
                     key={category._id}
                 >{category.name}</option>
             ))}
         </select>
+
+        {properties.length > 0 && (
+            <div>
+                {properties.map((property, propertyIndex) => {
+                    return (
+                        <div key={propertyIndex} className="flex gap-1">
+                            <span className="w-32">{property.name}</span>
+                            <select 
+                                className="max-w-md"
+                                onChange={(event) => handlePropertyChange(property.name, event.target.value)}
+                                value={formValues?.properties?.[property.name]}
+                            >
+                                <option>-</option>
+                                {property.values?.map((propertyValue, propertyValueIndex) => {
+                                    return (
+                                        <option
+                                            key={propertyValueIndex}
+                                            value={propertyValue}
+                                        >{propertyValue}</option>
+                                    )
+                                })}
+                            </select>
+                        </div>
+                    )
+                })}
+            </div>
+        )}
 
         <label>Photos</label>
         <div className="mb-2 flex flex-wrap gap-2">
