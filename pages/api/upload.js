@@ -3,8 +3,12 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 const bucketName = process.env.S3_BUCKET_NAME;
 import fs from 'fs';
 import mime from 'mime-types';
+import { isAdminRequest } from './auth/[...nextauth]';
+import { mongooseConnect } from '@/lib/mongoose';
 
 export default async function handle(req, res) {
+    await mongooseConnect();
+    await isAdminRequest(req, res);
     const form = new multiparty.Form();
 
     const client = new S3Client({

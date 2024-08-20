@@ -1,3 +1,4 @@
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
@@ -50,7 +51,11 @@ const isActiveLink = ({ pathname, link }) => {
 const Nav = () => {
     const commonLinkClasses = 'flex gap-1 p-1 pr-10 pl-2';
     const activeLinkClasses = `${commonLinkClasses} bg-white text-blue-900 rounded-l-lg`
-    const { pathname } = useRouter();
+    const { push, pathname } = useRouter();
+    const logout = async () => {
+        await push('/');
+        await signOut();
+    }
 
     return (
         <aside className="text-white p-4 pr-0 min-w-60">
@@ -71,6 +76,15 @@ const Nav = () => {
                         {item.name}
                     </Link>
                 ))}
+                <span
+                    className={`${commonLinkClasses} cursor-pointer`}
+                    onClick={logout}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
+                    </svg>
+                    Logout
+                </span>
             </nav>
         </aside>
     )

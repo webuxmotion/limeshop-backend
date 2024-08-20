@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import LoginPage from "@/components/LoginPage";
 import Nav from "@/components/Nav";
 
@@ -23,10 +23,6 @@ export default function Layout({ children }) {
                 <Nav />
                 <div className="bg-white flex-grow mt-2 mr-2 rounded-lg p-4 mb-2">
                     {children}
-
-                    <div className="mt-10 border-t-2 pt-2">
-                        <button onClick={signOut}>Logout</button>
-                    </div>
                 </div>
             </div>
         </>
